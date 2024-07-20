@@ -1,10 +1,12 @@
 #pragma once
 
 #include <barrier>
+#include <iostream>
+#include <latch>
 #include <mutex>
 #include <optional>
 #include <queue>
-#include <iostream>
+#include <utility>
 
 namespace fsm {
 
@@ -56,25 +58,30 @@ private:
 
 template <typename MessageType>
 class SyncChannel : public Channel<MessageType> {
+    struct Empty {
+        void operator()() {}
+    };
+
 public:
-    SyncChannel() {
-        mutex_read_.lock();
+    SyncChannel() : sync_point_(new std::latch(2)) {
+        mutex_recv_.lock();
+        mutex_send_.lock();
     }
 
     void SendMessage(MessageType msg) override {
-        mutex_write_.lock();
+        std::cout << "Arrive usr\n";
+
         last_message_ = {msg};
-        std::cout << "Sent msg\n";
-        mutex_read_.unlock();
-        mutex_write_.lock();
-        mutex_read_.lock();
+        sync_point_->arrive_and_wait();
+        std::cout << "Exit usr\n";
     }
 
     MessageType ReceiveMessage() override {
-        std::cout << "Receiving msg\n";
-        mutex_read_.lock();
+        std::cout << "Arrive srv\n";
+        sync_point_->arrive_and_wait();
         MessageType msg = last_message_.value();
-        mutex_write_.unlock();
+        std::cout << "Exit srv\n";
+        sync_point_.reset(new std::latch(2));
         return msg;
     }
 
@@ -86,7 +93,8 @@ public:
 
 private:
     std::optional<MessageType> last_message_;
-    std::mutex mutex_write_;
-    std::mutex mutex_read_;
+    std::mutex mutex_send_;
+    std::mutex mutex_recv_;
+    std::unique_ptr<std::latch> sync_point_;
 };
 }  // namespace fsm
