@@ -63,25 +63,19 @@ class SyncChannel : public Channel<MessageType> {
     };
 
 public:
-    SyncChannel() : sync_point_(new std::latch(2)) {
+    SyncChannel() : sync_point_(2, Empty()) {
         mutex_recv_.lock();
         mutex_send_.lock();
     }
 
     void SendMessage(MessageType msg) override {
-        std::cout << "Arrive usr\n";
-
         last_message_ = {msg};
-        sync_point_->arrive_and_wait();
-        std::cout << "Exit usr\n";
+        sync_point_.arrive_and_wait();
     }
 
     MessageType ReceiveMessage() override {
-        std::cout << "Arrive srv\n";
-        sync_point_->arrive_and_wait();
+        sync_point_.arrive_and_wait();
         MessageType msg = last_message_.value();
-        std::cout << "Exit srv\n";
-        sync_point_.reset(new std::latch(2));
         return msg;
     }
 
@@ -95,6 +89,6 @@ private:
     std::optional<MessageType> last_message_;
     std::mutex mutex_send_;
     std::mutex mutex_recv_;
-    std::unique_ptr<std::latch> sync_point_;
+    std::barrier<Empty> sync_point_;
 };
 }  // namespace fsm

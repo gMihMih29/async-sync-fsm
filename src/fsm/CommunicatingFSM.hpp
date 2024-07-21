@@ -42,7 +42,7 @@ public:
             return false;
         }
         if (act.first == Action::Transmit) {
-            input_channel_->SendMessage(key);
+            output_channel_->SendMessage(key);
         }
         fsm_.Move(key);
         return true;
