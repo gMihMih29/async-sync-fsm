@@ -21,34 +21,35 @@ std::unique_ptr<fsm::CFSM<Moves>> server(new fsm::CFSM<Moves>(keys));
 
 void run_user() {
     while (true) {
-        // console.lock();
+        console.lock();
         std::cout << "User: " << user->GetState() << "\n";
-        // console.unlock();
+        console.unlock();
         std::list<Moves> moves = user->LookUpMoves();
-        // std::cout << "Hello!1332\n";
         if (moves.empty()) {
             user->WaitForMsgAndMove();
         } else {
             user->Move(moves.front());
         }
+        sleep(1);
     }
 }
 
 void run_server() {
     while (true) {
-        // console.lock();
+        console.lock();
         std::cout << "Server: " << server->GetState() << "\n";
-        // console.unlock();
-        server->WaitForMsgAndMove();
-        // if (std::rand() % 5 == 0) {
-        //     auto moves = server->LookUpMoves();
-        //     if (moves.empty()) {
-        //         server->WaitForMsgAndMove();
-        //     } else {
-        //         server->Move(moves.front());
-        //     }
-        // } else {
-        // }
+        console.unlock();
+        auto moves = server->LookUpMoves();
+        if (moves.empty()) {
+            server->WaitForMsgAndMove();
+        } else {
+            if (std::rand() % 3 != 0) {
+                server->Move(moves.front());
+            } else {
+                server->WaitForMsgAndMove();
+            }
+        }
+        sleep(1);
     }
 }
 
@@ -56,8 +57,8 @@ int main() {
     std::srand(std::time(nullptr));
     // std::unique_ptr<fsm::CFSM<Moves>> user(new fsm::CFSM<Moves>(keys));
     // std::unique_ptr<fsm::CFSM<Moves>> server(new fsm::CFSM<Moves>(keys));
-    fsm::Channel<Moves>* user_to_server = new fsm::SyncChannel<Moves>();
-    fsm::Channel<Moves>* server_to_user = new fsm::SyncChannel<Moves>();
+    fsm::Channel<Moves>* user_to_server = new fsm::AsyncChannel<Moves>();
+    fsm::Channel<Moves>* server_to_user = new fsm::AsyncChannel<Moves>();
     user->AddNode("Ready");
     user->AddNode("Wait");
     user->AddNode("Register");
