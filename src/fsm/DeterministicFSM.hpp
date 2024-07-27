@@ -74,20 +74,22 @@ public:
     void SetInitialNode(const std::string& node_name) {
         assert(nodes_.find(node_name) != nodes_.end() &&
                "There is no node with node_name");
-        current_node_ = &nodes_[node_name];
+        current_state_ = node_name;
     }
 
-    const std::string& GetState() const { return current_node_->GetName(); }
+    const std::string& GetState() const { return current_state_; }
 
-    const Node<Key>& GetCurrentNode() const { return *current_node_; }
+    Node<Key>& GetCurrentNode() { return nodes_[current_state_]; }
+
+    const Node<Key>& GetCurrentNode() const { return nodes_[current_state_]; }
 
     void Move(const Key& key) {
-        current_node_ = &nodes_[current_node_->GetTransition(key)];
+        current_state_ = nodes_[current_state_].GetTransition(key);
     }
 
 private:
     std::map<std::string, Node<Key>> nodes_;
     std::vector<Key> keys_;
-    Node<Key>* current_node_;
+    std::string current_state_;
 };
 }  // namespace fsm

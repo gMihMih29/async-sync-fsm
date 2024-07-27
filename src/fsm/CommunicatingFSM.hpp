@@ -74,7 +74,11 @@ public:
         if (!has_receive_action) {
             return false;
         }
-        fsm_.Move(input_channel_->ReceiveMessage());
+        auto msg = input_channel_->ReceiveMessage();
+        if (!msg) {
+            return false;
+        }
+        fsm_.Move(msg.value());
         return true;
     }
 

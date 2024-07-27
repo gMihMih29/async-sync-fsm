@@ -14,7 +14,7 @@ template <typename MessageType>
 class Channel {
 public:
     virtual void SendMessage(MessageType msg) = 0;
-    virtual MessageType ReceiveMessage() = 0;
+    virtual std::optional<MessageType> ReceiveMessage() = 0;
     virtual bool HasMessage() const = 0;
     virtual std::optional<MessageType> LookUpMsg() const = 0;
 };
@@ -29,7 +29,7 @@ public:
         mutex_.unlock();
     }
 
-    MessageType ReceiveMessage() override {
+    std::optional<MessageType> ReceiveMessage() override {
         if (messages_.empty()) {
             mutex_.lock();
             mutex_.unlock();
@@ -39,7 +39,7 @@ public:
         if (messages_.empty()) {
             mutex_.lock();
         }
-        return msg;
+        return {msg};
     }
 
     bool HasMessage() const override { return !messages_.empty(); }
@@ -73,10 +73,10 @@ public:
         sync_point_.arrive_and_wait();
     }
 
-    MessageType ReceiveMessage() override {
+    std::optional<MessageType> ReceiveMessage() override {
         sync_point_.arrive_and_wait();
         MessageType msg = last_message_.value();
-        return msg;
+        return {msg};
     }
 
     bool HasMessage() const override { return last_message_.has_value(); }
@@ -91,4 +91,5 @@ private:
     std::mutex mutex_recv_;
     std::barrier<Empty> sync_point_;
 };
+
 }  // namespace fsm
