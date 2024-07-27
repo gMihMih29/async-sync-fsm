@@ -222,8 +222,6 @@ void bfs(fsm::CFSM<Moves> first, fsm::CFSM<Moves> second) {
         }
     }
     std::cout << "End of bfs\n\n\n";
-    std::cout << "Edges size: " << edges.size() << "\n";
-    std::cout << "Memory size: " << memory.size() << "\n";
     std::cout << "Possible states:\n";
     std::vector<std::string> states;
     for (int i = 0; i < memory.size(); ++i) {
